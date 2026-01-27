@@ -6,8 +6,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_PRISMA_URL") // プーリング接続用
-  directUrl = env("POSTGRES_URL_NON_POOLING") // マイグレーション用(直接接続)
+  url       = env("PRISMA_DATABASE_URL") // プーリング接続用
+  directUrl = env("POSTGRES_URL") // マイグレーション用(直接接続)
 }
 
 // --------------------------------------
@@ -20,11 +20,16 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  password      String?
   accounts      Account[]
   sessions      Session[]
   
   // アプリケーション固有のリレーション
   decks         Deck[]    // ユーザーが作成した単語帳リスト
+  
+  // クラスルーム関連
+  createdClassrooms Classroom[] @relation("Teacher") // 先生として作ったクラス
+  joinedClassrooms  Classroom[] @relation("Student") // 生徒として参加したクラス
 }
 
 model Account {
@@ -67,25 +72,57 @@ model VerificationToken {
 // --------------------------------------
 
 model Deck {
-  id          String   @id @default(cuid())
-  title       String   // 単語帳の名前
-  description String?  // 説明文
-  isPublic    Boolean  @default(false) // 公開設定 (共有機能用)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  userId      String   // 作成者のID
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  cards       Card[]   // この単語帳に含まれるカード
+  sections    Section[] // 保持しているSection
+  classrooms  Classroom[] // 単語帳が所属しているクラスルーム
+}
+
+// 新規追加: セクションモデル
+model Section {
+  id        String   @id @default(cuid())
+  name      String   // セクション名
+  createdAt DateTime @default(now())
+
+  deckId    String
+  deck      Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  cards     Card[]   // SectionがCardを持つ
 }
 
 model Card {
   id          String   @id @default(cuid())
-  term        String   // 表面（単語）
-  definition  String   // 裏面（意味・答え）
+  term        String
+  definition  String
   createdAt   DateTime @default(now())
 
-  deckId      String   // 所属する単語帳のID
-  deck        Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  // 所属しているSectionId
+  sectionId   String
+  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+}
+
+// クラスルームモデル
+model Classroom {
+  id          String   @id @default(cuid())
+  name        String   // クラス名 (例: "1年A組 英語")
+  code        String   @unique // 参加用コード (例: "XKY789")
+  createdAt   DateTime @default(now())
+
+  // 先生 (作成者)
+  teacherId   String
+  teacher     User     @relation("Teacher", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  // 生徒たち (多対多)
+  students    User[]   @relation("Student")
+
+  // 追加された単語帳 (多対多)
+  decks       Deck[]
 }
