@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 
-// ユーザー登録 (バリデーションと自動ログイン付き)
+// ユーザー登録
 export async function register(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -58,7 +58,7 @@ export async function register(formData: FormData) {
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/dashboard",
+      redirectTo: "/",
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -93,7 +93,7 @@ export async function createDeck(formData: FormData) {
   revalidatePath("/");
 }
 
-// 単語帳を削除する機能（ついでに作っておきます）
+// 単語帳を削除する機能
 export async function deleteDeck(id: string) {
   const session = await auth();
   if (!session?.user?.id) return;
@@ -109,7 +109,7 @@ export async function deleteDeck(id: string) {
   revalidatePath("/dashboard");
 }
 
-// ▼ 新規追加: セクションを作成
+//  セクションを作成
 export async function createSection(deckId: string, formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) return;
