@@ -8,8 +8,7 @@
 **Knowledge Shared. Instantly.**  
 先生と生徒をつなぐ、シンプルでモダンな単語帳プラットフォーム。  
   
-制作者: 安部 航生  
-制作時間: 20時間
+制作時期: 20261月25日～2026年2月2日 (20時間)
 
 [デプロイされたサイト (Vercel)](https://pop-deck-hub.vercel.app/)
 
